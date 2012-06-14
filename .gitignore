@@ -1,0 +1,6 @@
+#Ignore the dist directory
+/dist/*
+
+#Other files
+*.swp
+.svn
