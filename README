@@ -2,13 +2,13 @@
 
 This is the solrmarc source used for the Blacklight at Hull Project. 
 
-For information about Solr-Marc please visit - link:http://code.google.com/p/solrmarc/
+For information about Solr-Marc please visit - http://code.google.com/p/solrmarc/
 
 The custom index methods are contained in the /src directory.  
 
 All other additions/changes are made to the configuration files.
 
-See link:http://code.google.com/p/solrmarc/wiki/GettingStartedFromASourceDistribution for information about building solr-marc from source.  However in a nutshell... 
+See http://code.google.com/p/solrmarc/wiki/GettingStartedFromASourceDistribution for information about building solr-marc from source.  However in a nutshell... 
 
 You need:-
 

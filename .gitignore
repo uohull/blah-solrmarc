@@ -1,5 +1,7 @@
 #Ignore the dist directory
 /dist/*
+/build/*
+/build/*.class
 
 #Other files
 *.swp
