@@ -224,12 +224,12 @@
                 </filtermapper>
             </chainedmapper>
         </pathconvert>
-        <echo level="debug" message="fileset string.test.classes.in.jar = ${test.classes.in.jar}" />
+        <echo level="debug" message="fileset test.classes.in.jar = ${test.classes.in.jar}" />
 
         <jar destfile="${site.test.build.dir}/${site.test.jar}" >
               <fileset dir="${site.test.build.dir}" includes="**/*.class" /> 
               <manifest>
-                  <attribute name="TestClasses" value="${string.test.classes.in.jar}"/>
+                  <attribute name="TestClasses" value="${test.classes.in.jar}"/>
               </manifest>
         </jar>
     </target>
@@ -349,7 +349,8 @@
         <get_jars_from_solrmarc_onejar todir="${site.test.dir}/tmp_solrmarc_jars" />
         
         <set_path_for_junit_tests />
-        <run_parameterized_junit_tests classpathrefid="test.run.classpath.include.site.jars" datafile="indextest.txt" />
+        <run_parameterized_junit_tests classpathrefid="test.run.classpath.include.site.jars" datafile="indextest.txt"
+               solrmarcPath="${dist.dir}|${site.dir}/extra_data"  />
         
         <!--  Now delete the jar files that had to be un-jarred from the solr.war file for the test to run -->
         <delete dir="${solr.jar.file.dir}" deleteonexit="true" quiet="true" />
@@ -371,9 +372,9 @@
         <property name="test.classes.to.exclude"  value="" />
         
         <run_jarfull_of_junit_tests classpathrefid="test.run.classpath.include.site.jars" 
-             teststorun="${test.jar}"  testConfigDir="${site.test.data.dir}/smoketest" 
-             testConfigFile="${site.test.data.dir}/smoketest/test_config.properties" 
-             solrPath="${site.test.data.dir}/smoketest/solr" solrDataDir="${site.test.data.dir}/smoketest/solr/data" />
+             teststorun="${test.jar}"  testConfigDir="${dist.path}" 
+             testConfigFile="${default.config}" 
+             solrPath="${site.test.dir}/solr" solrDataDir="${site.test.dir}/solr/data" />
         
         <!--  Now delete the jar files that had to be un-jarred from the solr.war file for the test to run -->
         <delete dir="${solr.jar.file.dir}" deleteonexit="true" quiet="true" />
@@ -407,7 +408,7 @@
         <run_jarfull_of_junit_tests classpathrefid="test.run.classpath.core.only.jars" 
              teststorun="${site.test.build.dir}/SolrMarcJunit.jar" 
              testConfigDir="${test.data.dir}/smoketest" testConfigFile="${test.data.dir}/smoketest/test_config.properties" 
-             solrPath="${test.data.dir}/smoketest/solr" solrDataDir="${test.data.dir}/smoketest/solr" />
+             solrPath="${test.data.dir}/smoketest/solr" solrDataDir="${test.data.dir}/smoketest/solr/data" />
 
         <!--  Now delete the jar files that had to be un-jarred from the solr.war file for the test to run -->
         <delete dir="${solr.jar.file.dir}" deleteonexit="true" quiet="true" />
@@ -594,10 +595,15 @@
                 <available file="${site.src.dir}" type="dir" />
                 <then>
                     <fileset id="custom_indexer_source" dir="${site.src.dir}" includes="**/*.java">
-                        <or>
-                            <containsregexp expression="public[ ]+class[ ]+[A-Za-z][A-Za-z0-9_]*[ ]+extends[ ]+SolrIndexer" />
-                            <containsregexp expression="public[ ]+class[ ]+[A-Za-z][A-Za-z0-9_]*[ ]+extends[ ]+org[.]solrmarc[.]index[.]SolrIndexer" />
-                        </or>
+                        <and>
+                            <or>
+                                <containsregexp expression="public[ ]+class[ ]+[A-Za-z][A-Za-z0-9_]*[ ]+extends[ ]+SolrIndexer" />
+                                <containsregexp expression="public[ ]+class[ ]+[A-Za-z][A-Za-z0-9_]*[ ]+extends[ ]+org[.]solrmarc[.]index[.]SolrIndexer" />
+                            </or>
+                            <not>
+                                <containsregexp expression="extends.*SolrIndexerMixin" />
+                            </not>
+                        </and>
                     </fileset>
 
                     <condition property="custom.index.source.exists">
@@ -679,6 +685,7 @@
                 <flattenmapper/>
                 <patternset>
                     <include name="**/*.jar"/>
+                    <exclude name="**/*solrj*.jar" />
                 </patternset>
             </unwar>
         </sequential>
@@ -786,18 +793,19 @@
                                 <replaceregex pattern="\.class" flags="g" replace="#class"/>
                                 <replaceregex pattern="\." flags="g" replace="/" />
                                 <replaceregex pattern="#class" flags="g" replace=".class"/>
-                                <replaceregex pattern="([^,]+\.class)" flags="g" replace="**/\1"/>
+                                <!--  Add another entry at the end, because the zipfileset seems to lose the last entry  -->
+                                <replaceregex pattern=".class.?.?.?$" flags="" replace=".class,placeholder.class"/>
                             </tokenfilter>
                         </filterchain>
                     </loadresource>
-                    <echo level="debug" message="test classes = ${@{teststorun}.testlist}" />
+                    <echo level="info" message="test classes = ${@{teststorun}.testlist}" />
                     <zipfileset id="jartestfiles" src="@{teststorun}" includes="${@{teststorun}.testlist}" />
                     <pathconvert property="jartestfileslist" refid="jartestfiles" pathsep="  " >
                     </pathconvert>
-                    <echo level="debug" message="zip file entries = ${jartestfileslist}" />
+                    <echo level="info" message="zip file entries = ${jartestfileslist}" />
 
-                    <junit showoutput="yes" printsummary="yes" fork="yes" forkmode="perBatch" dir="${dist.path}"
-                        haltonfailure="no" failureproperty="test.failed" >
+                    <junit showoutput="yes" printsummary="yes" fork="yes" forkmode="perTest" dir="${dist.path}"
+                        haltonfailure="no" failureproperty="test.failed" maxmemory="256m" >
                         <formatter type="xml" usefile="yes" />
             
                         <classpath>
