@@ -62,4 +62,130 @@ public class BlahIndexer extends SolrIndexer
     }
 //  other custom indexing functions go here
 
+
+  /**
+   * Returns a Cast list if it exists for a record 
+   * Cast list is stored in 511a Indicator field One = 1   
+   *
+   * @param  LinkedHashSet          resultSet
+   * @return      
+   */
+  public String getRecordCastList(Record record)
+  {
+    Set resultSet = new LinkedHashSet();
+    List fields = getVariableFields(record, "511");
+
+    for (Object field : fields)
+    {
+      if (field instanceof DataField)
+      {
+        DataField dField = (DataField)field;
+        
+        if (dField.getIndicator1() == 1) 
+        {
+          if (dField.getSubfield('a') != null) 
+          {
+            resultSet.add(dField.getSubfield('a').getData());
+          }          
+        }  
+      } 
+    }
+    return resultSet;
+  }
+
+ /**
+   * Returns a Performers list if it exists for a record 
+   * Cast list is stored in 511a Indicator field One != 1   
+   *
+   * @param  LinkedHashSet          resultSet
+   * @return      
+   */
+  public String getRecordPerformerList(Record record)
+  {
+    Set resultSet = new LinkedHashSet();
+    List fields = getVariableFields(record, "511");
+
+    for (Object field : fields)
+    {
+      if (field instanceof DataField)
+      {
+        DataField dField = (DataField)field;
+        
+        if (dField.getIndicator1() != 1)
+        {
+          if (dField.getSubfield('a') != null) 
+          {
+            resultSet.add(dField.getSubfield('a').getData());
+          }          
+        }  
+      } 
+    }
+    return resultSet;
+  }
+
+  /**
+   * Enables you to getFields by the first and second indicators, fieldNo and subFieldString (use null for no subfield )
+   * fieldNumbers can multiple fields by sperating the fields using the ":" char.  
+   *
+   * @param  LinkedHashSet          resultSet
+   * @return      
+   */
+   public String getFieldsByIndicators(Record record, String fieldNumbers, String subFieldString, String firstIndicator, String secondIndicator)
+   {
+    Set resultSet = new LinkedHashSet();  
+    String[] fieldArray;
+
+    //If the fieldNo variable contains more than one fieldNo (split by the ":" char) then add them fieldArray
+    //Otherwise just add the single field to the same array
+    if fieldNumbers.contains(":") {
+      fieldArray = fieldNumbers.split("\\:")
+    }
+    else {
+      fieldArray = new String[] { fieldNumbers }
+    }
+
+    //Loop around all the fieldNo
+    for (String fieldNo in fieldArray)
+    { 
+      List fields = getVariableFields(record, fieldNo);
+
+      //Loop around all the fields within the fieldNo
+      for (Object field : fields)
+      {
+        if (field instanceof DataField)
+        {
+          DataField dField = (DataField)field;
+          
+          //Compare the dataField with the indicators specified in the method params
+          if (dField.getIndicator1() == firstIndicator && dField.getIndicator2() == secondIndicator)
+          {
+            //If null has been entered as a subField we get all the subField entries
+            if (subFieldString == "null") {
+              List subFieldList = dField.getSubfieldList(); 
+    
+              for (Object subField : subFieldList)
+              {
+                if (subField instanceof Subfield)
+                {
+                  resultSet.add(subField.getData());
+                }
+              }
+            }
+            //Else we just get the subField entry specified 
+            else 
+            {
+              char subFieldChar = subFieldString.charAt(0);
+              if (dField.getSubfield(subFieldChar) != null) 
+              {
+                resultSet.add(dField.getSubfield(subFieldChar).getData());
+              }     
+            }
+          }  
+        } 
+      }
+    }
+    return resultSet;
+  }
+
+
 }
