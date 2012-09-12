@@ -1,5 +1,7 @@
 import org.solrmarc.index.SolrIndexer;
 import org.marc4j.marc.*;
+import java.util.HashSet.*;
+import java.util.*;
 
 public class BlahIndexer extends SolrIndexer
 {
@@ -70,10 +72,10 @@ public class BlahIndexer extends SolrIndexer
    * @param  LinkedHashSet          resultSet
    * @return      
    */
-  public String getRecordCastList(Record record)
+  public Set getRecordCastList(Record record)
   {
     Set resultSet = new LinkedHashSet();
-    List fields = getVariableFields(record, "511");
+    List fields = record.getVariableFields("511");
 
     for (Object field : fields)
     {
@@ -81,7 +83,7 @@ public class BlahIndexer extends SolrIndexer
       {
         DataField dField = (DataField)field;
         
-        if (dField.getIndicator1() == 1) 
+        if (dField.getIndicator1() == '1') 
         {
           if (dField.getSubfield('a') != null) 
           {
@@ -100,10 +102,10 @@ public class BlahIndexer extends SolrIndexer
    * @param  LinkedHashSet          resultSet
    * @return      
    */
-  public String getRecordPerformerList(Record record)
+  public Set getRecordPerformerList(Record record)
   {
     Set resultSet = new LinkedHashSet();
-    List fields = getVariableFields(record, "511");
+    List fields = record.getVariableFields("511");
 
     for (Object field : fields)
     {
@@ -111,7 +113,7 @@ public class BlahIndexer extends SolrIndexer
       {
         DataField dField = (DataField)field;
         
-        if (dField.getIndicator1() != 1)
+        if (dField.getIndicator1() != '1')
         {
           if (dField.getSubfield('a') != null) 
           {
@@ -130,44 +132,45 @@ public class BlahIndexer extends SolrIndexer
    * @param  LinkedHashSet          resultSet
    * @return      
    */
-   public String getFieldsByIndicators(Record record, String fieldNumbers, String subFieldString, String firstIndicator, String secondIndicator)
+   public Set getFieldsByIndicators(Record record, String fieldNumbers, String subFieldString, String firstIndicator, String secondIndicator)
    {
     Set resultSet = new LinkedHashSet();  
     String[] fieldArray;
 
     //If the fieldNo variable contains more than one fieldNo (split by the ":" char) then add them fieldArray
     //Otherwise just add the single field to the same array
-    if fieldNumbers.contains(":") {
-      fieldArray = fieldNumbers.split("\\:")
+    if (fieldNumbers.contains(":")) {
+      fieldArray = fieldNumbers.split("\\:");
     }
     else {
-      fieldArray = new String[] { fieldNumbers }
+      fieldArray = new String[] { fieldNumbers };
     }
 
     //Loop around all the fieldNo
-    for (String fieldNo in fieldArray)
+    for (String fieldNo : fieldArray)
     { 
-      List fields = getVariableFields(record, fieldNo);
+      List fields = record.getVariableFields(fieldNo);
 
       //Loop around all the fields within the fieldNo
       for (Object field : fields)
       {
         if (field instanceof DataField)
         {
-          DataField dField = (DataField)field;
+          DataField dField = (DataField) field;
           
           //Compare the dataField with the indicators specified in the method params
-          if (dField.getIndicator1() == firstIndicator && dField.getIndicator2() == secondIndicator)
+          if (dField.getIndicator1() == firstIndicator.charAt(0) && dField.getIndicator2() == secondIndicator.charAt(0))
           {
             //If null has been entered as a subField we get all the subField entries
-            if (subFieldString == "null") {
-              List subFieldList = dField.getSubfieldList(); 
+            if (subFieldString.equals("null")) {
+              List subFieldList = dField.getSubfields(); 
     
               for (Object subField : subFieldList)
               {
                 if (subField instanceof Subfield)
                 {
-                  resultSet.add(subField.getData());
+                  Subfield sField = (Subfield) subField;
+                  resultSet.add(sField.getData());
                 }
               }
             }
