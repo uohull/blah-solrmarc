@@ -1,4 +1,5 @@
 import org.solrmarc.index.SolrIndexer;
+import org.solrmarc.tools.Utils;
 import org.marc4j.marc.*;
 import java.util.HashSet.*;
 import java.util.*;
@@ -190,5 +191,23 @@ public class BlahIndexer extends SolrIndexer
     return resultSet;
   }
 
+  /**
+  * Return the Publication date in 260c or 264c as a string
+  * This is an adapted version of getDate, with the fallback of 
+  * checking for 264c for RDA records
+  * @param record - the marc record object
+  * @return 260c, "cleaned" per org.solrmarc.tools.Utils.cleanDate()
+  */
+  public String getPubDate(Record record)
+  {
+    String date = getFieldVals(record, "260c", ", ");
+
+    if (date == null || date.length() == 0) {
+      date = getFieldVals(record, "264c", ", ");
+      if (date == null || date.length() == 0) 
+        return (null);
+    }  
+    return Utils.cleanDate(date);
+  }
 
 }
