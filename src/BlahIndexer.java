@@ -13,11 +13,15 @@ public class BlahIndexer extends SolrIndexer
         super(propertiesMapFile, propertyPaths);
     }
 
-
   /**
    * Extract the Bibliographic number from the record
-   * and remove any occurances of '.' from it, to enable  it 
+   * and remove any occurances of '.' from it, to enable it
    * be used as a Solr ID.
+   *
+   * Additionally if the ID is 9 characters (typically the bib number with control char at the end)
+   * chop the last digit/char off to make it 8 chars (this will match the Millennium ID) eg:
+   *   - 907a might store 'b10082281' but to remain compatable with Milleniums usage this will be chopped
+   *      to b1008228
    *
    * @param  Record     record
    * @return bibField     Bib number
@@ -28,7 +32,15 @@ public class BlahIndexer extends SolrIndexer
 
       if (bibField != null)
       {
-        return bibField.replace(".", "");   
+        String bibFieldId = bibField.replace(".", "");        
+
+        // Code to chop last char if the id is larger than 8 chars... 
+        if (bibFieldId.length() > 8) {
+          return bibFieldId.substring(0, bibFieldId.length() - 1);
+        }
+        else {
+          return bibFieldId;
+        }   
       }
       else
       {
