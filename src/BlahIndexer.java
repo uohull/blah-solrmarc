@@ -77,6 +77,54 @@ public class BlahIndexer extends SolrIndexer
     }
 //  other custom indexing functions go here
 
+  /**
+   * Returns a list of  URL and URL texts for the given Marc record
+   * Method uses the 'u' subfield for the URL, and 'z' subfield for the link description
+   * Link text defaults to 'Access this resource online' when z is null.
+   * Each member of set is in the following form "URL|Link text"
+   * Future note: Could return as JSON for clearer def of data. 
+   * Cast list is stored in 511a Indicator field One = 1   
+   *
+   * @param  Record          record
+   * @param  String            fieldNumbers
+   * @return  Set                 resultSet      
+   */
+  public Set getFulltextUrls(Record record, String fieldNumbers) {
+
+    Set resultSet = new LinkedHashSet();
+    String[] fieldArray;
+
+    fieldArray = getFieldArrayFromString(fieldNumbers);
+
+    List fields = record.getVariableFields(fieldArray);
+    
+    for (Object field : fields)  {
+      if (field instanceof DataField) {
+
+        DataField dField = (DataField)field;
+
+        String url;
+        String urlText;
+
+        if (dField.getSubfield('u') != null) {
+           url = dField.getSubfield('u').getData();
+
+          if (dField.getSubfield('z') != null) 
+          {
+             urlText = dField.getSubfield('z').getData();
+          }
+          else 
+          {
+             urlText = "Access this resource online";
+          }
+          resultSet.add(url + "|" + urlText);
+        }
+      }
+    }
+
+    return resultSet;
+  }
+
 
   /**
    * Returns a Cast list if it exists for a record 
@@ -150,14 +198,7 @@ public class BlahIndexer extends SolrIndexer
     Set resultSet = new LinkedHashSet();  
     String[] fieldArray;
 
-    //If the fieldNo variable contains more than one fieldNo (split by the ":" char) then add them fieldArray
-    //Otherwise just add the single field to the same array
-    if (fieldNumbers.contains(":")) {
-      fieldArray = fieldNumbers.split("\\:");
-    }
-    else {
-      fieldArray = new String[] { fieldNumbers };
-    }
+    fieldArray = getFieldArrayFromString(fieldNumbers);
 
     //Loop around all the fieldNo
     for (String fieldNo : fieldArray)
@@ -220,6 +261,20 @@ public class BlahIndexer extends SolrIndexer
         return (null);
     }  
     return Utils.cleanDate(date);
+  }
+
+  //If the fieldNo variable contains more than one fieldNo (split by the ":" char) then add them fieldArray
+  //Otherwise just add the single field to the same array
+  private String[] getFieldArrayFromString(String fieldNumbers) {
+    String[] fieldArray;
+
+    if (fieldNumbers.contains(":")) {
+      fieldArray = fieldNumbers.split("\\:");
+    }
+    else {
+      fieldArray = new String[] { fieldNumbers };
+    }
+    return fieldArray;
   }
 
 }
