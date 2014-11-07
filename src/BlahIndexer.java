@@ -125,6 +125,51 @@ public class BlahIndexer extends SolrIndexer
     return resultSet;
   }
 
+  /**
+   * Returns a list of Library location codes for a record
+   * Rules used to reflect the structure of the MARC data from Millennium (see comments)
+   *
+   * @param  Record          record
+   * @return  Set                 resultSet      
+   */
+  public Set getLibraryCode(Record record) {
+
+    Set resultSet = new LinkedHashSet();
+
+    // For 998 we only get the first instance of 998, and then every 'a' subfield
+    // D: The second 998 is a throwback to when every record was output and reloaded as part of our MARC21 conversion in 2006
+    // and so only applies to records before that time.  These can be manually removed but several 000,000 records exist. 
+    DataField field = (DataField)record.getVariableField("998");
+    if (field != null) {
+        List subfields = field.getSubfields('a');
+
+        for(Object sfield : subfields) {
+          if (sfield instanceof Subfield) {
+              Subfield subfield = (Subfield)sfield;
+              resultSet.add(subfield.getData().trim());
+          }
+        }
+    }
+  
+    // For 945 we get every entry, and get the first I subfield from each
+    // D: The 945 is needed for the different departmental collections we list separately (WISE, Blaydes House, History Centre, Map Room and Chemistry) 
+    // because that detail is only held in the 945
+    List fields = record.getVariableFields("945");
+    for (Object lfield : fields) {
+
+      if (lfield instanceof DataField) {
+        DataField dField = (DataField)lfield;
+
+        if (dField.getSubfield('l') != null) {
+          resultSet.add(dField.getSubfield('l').getData().trim());
+        }  
+      } 
+    }
+     
+    // The return resultSet will be a list of codes that will be translated using the  library_map translation_map. 
+    return resultSet;
+  }
+
 
   /**
    * Returns a Cast list if it exists for a record 
